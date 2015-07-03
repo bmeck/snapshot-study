@@ -11,10 +11,7 @@ const file = require('path').resolve(process.argv[2]);
 const json = require(file);
 const provider = new JSONSnapshotProvider(json);
 const snapshot = new HeapSnapshot(provider);
-// CLOSURE: id of a closure scope (could be many of these per fn)
-// NODE: id of the property being kept alive
-// VARIABLE: string of the property of the CLOSURE (variable name)
-// SCOPE: id of the thing keeping the closure alive (script, other closure, etc.)
+
 function walk(edge) { 
   var to_walk = [edge];
   var visited = [];
