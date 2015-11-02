@@ -1,5 +1,6 @@
+#include <v8.h>
 #include <v8-profiler.h>
-#include "FileOutputStream.cc"
+#include "FileOutputStream.h"
 
 using v8::HeapProfiler;
 using v8::HeapGraphNode;
@@ -369,5 +370,6 @@ void dumpHeapGraphNode(
   dumpStringReference(fninfo_stream, strings, origin.ResourceColumnOffset());
   fninfo_stream->WriteAsciiChunk(",", 1);
 
-  dumpStringReference(fninfo_stream, strings, origin.ResourceIsSharedCrossOrigin());
+  // TODO: ScriptOriginOptions
+  // dumpStringReference(fninfo_stream, strings, origin.ResourceIsSharedCrossOrigin());
 }

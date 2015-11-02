@@ -13,24 +13,21 @@ const provider = new JSONSnapshotProvider(json);
 const snapshot = new HeapSnapshot(provider);
 
 function walk(edge) { 
-  var to_walk = [edge];
-  var visited = [];
+  const to_walk = [edge];
+  const visited = [];
   while(to_walk.length) {
-    var node = to_walk.shift().getNode();
+    let node = to_walk.shift().getNode();
     if (visited.indexOf(node.node.id) >= 0) {
       continue;
     }
     visited.push(node.node.id);
-    const trace = node.getTraceNode();
-    console.log({
-      node: node.node,
-      trace_function_info: trace.trace_function_info
-    });
-    const iter = node.walkEdges();
-    let item = iter.next();
-    while (!item.done) {
-      to_walk.push(item.value);
-      item = iter.next();
+    const trace = node.getTraceNode() || {
+      trace_function_info: null
+    };
+    process.stdout.write(`${JSON.stringify(node)}\n`);
+    for (const item of node.walkEdges()) {
+      to_walk.push(item);
+      process.stdout.write(`${JSON.stringify(item)}\n`);
     }
   }
 }

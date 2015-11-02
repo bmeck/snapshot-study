@@ -15,11 +15,11 @@
   "devDependencies": {
     "babel": "^5.5.5",
     "heapdump": "^0.3.5",
-    "nan": "^1.8.4",
     "v8-profiler": "^5.2.9"
   },
   "dependencies": {
     "babel-runtime": "^5.5.5",
-    "bindings": "^1.2.1"
+    "bindings": "^1.2.1",
+    "nan": "^2.1.0"
   }
 }

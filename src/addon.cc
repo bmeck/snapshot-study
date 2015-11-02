@@ -5,7 +5,7 @@
 #include <set>
 #include <v8-profiler.h>
 #include "addon.h"
-#include "FileOutputStream.cc"
+#include "FileOutputStream.h"
 
 using v8::Handle;
 using v8::Object;
@@ -48,8 +48,6 @@ unsigned long dump(
   visited->insert(id);
   visited_count++;
 
-  unsigned int count = node->GetChildrenCount();
-
   HeapGraphNode::Type node_type = node->GetType();
   if (node_type == HeapGraphNode::Type::kClosure) {
     if (seen_closures) {
@@ -58,10 +56,10 @@ unsigned long dump(
     dumpHeapGraphNode(fninfo_stream, profiler, node, strings); 
     seen_closures = true;
   }
-  for (unsigned int i = 0; i < count; i++) {
-    const HeapGraphEdge* edge;
-    edge = node->GetChild(i);
-    const char* name = *String::Utf8Value(edge->GetName());
+  for (unsigned int i = 0; i < node->GetChildrenCount(); i++) {
+    const HeapGraphEdge* edge = node->GetChild(i);
+    const String::Utf8Value utf8(edge->GetName());
+    const char* name = *utf8;
     const HeapGraphNode* child = edge->GetToNode();
     visited_count = dump(fninfo_stream, profiler, child, visited_count, seen_closures, visited, strings); 
   }
@@ -74,12 +72,12 @@ unsigned long dump(
 
 // Simple synchronous access to the `Estimate()` function
 NAN_METHOD(WriteFiles) {
-  NanScope();
+  Nan::HandleScope();
 
   const HeapProfiler* profiler = v8::Isolate::GetCurrent()->GetHeapProfiler();
 
   const HeapSnapshot* snapshot = const_cast<HeapProfiler*>(profiler)->TakeHeapSnapshot(
-    NanNew("snappy")
+    //Nan::New("snappy")
   );
 
   const char* heapsnapshot = "heapsnapshot.json";
@@ -87,12 +85,12 @@ NAN_METHOD(WriteFiles) {
 
   FILE* heap_fp = fopen(heapsnapshot, "w");
   if (heap_fp == NULL) {
-    return NanThrowError("unable to open heapsnapshot for writing");
+    return Nan::ThrowError("unable to open heapsnapshot for writing");
   }
   FileOutputStream heap_stream(heap_fp);
   FILE* fninfo_fp = fopen(fninfo, "w");
   if (fninfo_fp == NULL) {
-    return NanThrowError("unable to open fninfo for writing");
+    return Nan::ThrowError("unable to open fninfo for writing");
   }
   FileOutputStream fninfo_stream(fninfo_fp);
   fninfo_stream.WriteAsciiChunk("[", 1);
@@ -106,12 +104,26 @@ NAN_METHOD(WriteFiles) {
   dump(&fninfo_stream, profiler, root, -1);
   fclose(fninfo_fp);
 
-  NanReturnUndefined();
+  info.GetReturnValue().Set(Nan::Undefined());
+}
+
+NAN_METHOD(GetInvisible) {
+  Nan::HandleScope();
+
+  Handle<v8::ObjectTemplate> hidey = v8::ObjectTemplate::New(v8::Isolate::GetCurrent());
+  
+  info.GetReturnValue().Set(Nan::Undefined());
 }
 
 void InitAll(Handle<Object> exports) {
-  exports->Set(NanNew<String>("writeFiles"),
-    NanNew<FunctionTemplate>(WriteFiles)->GetFunction());
+  Local<String> getInvisible;
+  Nan::New<String>("getInvisible").ToLocal(&getInvisible);
+  Local<String> writeFiles;
+  Nan::New<String>("writeFiles").ToLocal(&writeFiles);
+  exports->Set(writeFiles,
+    Nan::New<FunctionTemplate>(WriteFiles)->GetFunction());
+  exports->Set(getInvisible,
+    Nan::New<FunctionTemplate>(GetInvisible)->GetFunction());
 }
 
 NODE_MODULE(SnapshotStudy, InitAll)
