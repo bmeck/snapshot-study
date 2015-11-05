@@ -22,24 +22,36 @@ function walk(edge) {
   const paths = [[]];
   const true_paths = [];
   const visited = [];
-  const contexts = {};
+  const found = new Map();
   while(to_walk.length) {
     let node = to_walk.shift().getNode();
-	  let path = paths.shift().concat({nt:node.node.type, n:node.node.name});
+    let path_entry = {nt:node.node.type, n:node.node.name, ni:node.node.id};
+	  let path = paths.shift().concat(path_entry);
 	  //console.error('checking', node.node.id, visited.length / total_nodes);
     //const trace = node.getTraceNode() || {
     //  trace_function_info: null
     //};
+    if (node.node.name === name) {
+      true_paths.push(path);
+      found.set(node.node.id, path_entry);
+    }
+    var i = 0;
     for (const item of node.walkEdges()) {
+      var next_path = path.concat({et:item.edge.type, n:item.edge.name_or_index,ei:i,en:item.edge.to_node});
+      if (item.edge.name_or_index === name) {
+        true_paths.push(next_path);
+      }
       if (visited.indexOf(item.edge.to_node) >= 0) {
+        var possible = item.getNode();
+        if (found.has(possible.node.id)) {
+          true_paths.push(next_path.concat(found.get(possible.node.id)));
+        }
         continue;
       }
-      if (item.edge.type === 'context' && item.edge.name_or_index === name) {
-        true_paths.push(path);
-      }
       visited.push(item.edge.to_node);
-	    paths.push(path.concat({et:item.edge.type, n:item.edge.name_or_index}));
+	    paths.push(next_path);
       to_walk.push(item);
+      i++;
     }
   }
   console.log(true_paths)
